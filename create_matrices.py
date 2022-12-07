@@ -105,11 +105,12 @@ def parcellate(parcellation, cifti):
 def overlap(parcellation, roi, thresh=0):
     num_of_parcels = np.unique(parcellation) 
     num_of_parcels = num_of_parcels[num_of_parcels != 0].astype(int)
-    proportion = np.zeros(max(num_of_parcels)) # 1000-long list of entries, not initialized
+    proportion = np.ones(max(num_of_parcels)) # 1000-long list of entries, not initialized
     roi = roi.get_fdata().squeeze()
     for parcel in num_of_parcels:
         idx = parcellation == parcel
-        proportion[parcel-1] = roi[idx].mean()
+	if sum(idx):
+        	proportion[parcel-1] = roi[idx].mean()
     return proportion <= thresh
 
 
