@@ -11,6 +11,7 @@ p.addParameter('rois', {'tpj', 'dlpfc', 'pre_sma'});
 p.addParameter('runs', {'REST1', 'REST4', 'MOVIE2','MOVIE4'});
 p.addParameter('sub',sub);
 p.addParameter('logfile','');
+p.addParameter('JobStorageLocation','',@ischar);
 p.addParameter('cores',feature('numcores'));
 
 p.parse(varargin{:});
@@ -28,7 +29,7 @@ else
     fid = 0;
 end
 % start parpool
-util.start_parpool(inputs.cores);
+util.start_parpool('numCores',inputs.cores,'JobStorageLocation',inputs.JobStorageLocation);
 % loop over rois
 for i=1:numel(rois)
     % loop over condtions
