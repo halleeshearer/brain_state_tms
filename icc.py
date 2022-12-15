@@ -6,13 +6,18 @@ import sklearn as skl
 import matplotlib as plot
 import matplotlib.pyplot as plt
 import scipy.stats as stats
-import multiprocessing as mp
+
 import pingouin as pg
 
-def rearrange(sub, roi_name, inDir='/scratch/st-tv01-1/hcp/targets'):
+import argparse
+import sys
+import time
+import multiprocessing as mp
+
+def rearrange(sub, roi_name, conditions, inDir='/scratch/st-tv01-1/hcp/targets'):
     df = pd.DataFrame(columns = ['subject', 'run', 'value', 'edge', 'roi'])
-    conditions = ['REST1', 'REST4', 'MOVIE2', 'MOVIE4']
     for cond in conditions:
+        print(f'loading {sub} {cond}...')
         file = f'{inDir}/sub{sub}_{cond}_{roi_name}.csv'
         #print(file)
         matrix = pd.read_csv(file, sep=',', header=None)
@@ -26,41 +31,52 @@ def rearrange(sub, roi_name, inDir='/scratch/st-tv01-1/hcp/targets'):
         df = pd.concat([df, df_to_add])
     return df
 
-def icc_analysis(df):
-    results = np.zeros((len(np.unique(df['edge']))*2, 3))
-    count = 0
-    for cond in ['REST', 'MOVIE']:
-            df_run = df[df['run'].str.contains(cond)]
-            for edge in np.unique(df['edge']):
-                df_edge = df_run[df_run['edge']==edge]
-                pg.intraclass_corr(data = df_edge, targets = 'subject', raters = 'run', ratings = 'value')
-                results[count,0] = edge
-                results[count,1] = icc.ICC[4]
-                results[count,2] = cond
-                count = count + 1
-    return results
-
-roi = ['dlpfc', 'tpj', 'pre_sma']
-sub = pd.read_csv('/arc/project/st-tv01-1/hcp/targets/m2m4_sub_n111.csv', header = None).squeeze()
-
-# loop over each roi
-pool = mp.Pool(mp.cpu_count())
-for r in roi:
-    # setup starmap args
-    args = []
-    for s in sub:
-        args.append((s, r))
-    results = pool.starmap(rearrange, args)
-    # concat subs to 1 df
-    df = results.pop(0)
-    while len(results) > 0:
-        df = pd.concat((df, results.pop()))
-    # run icc code and save
-    icc = icc_analysis(df)
-    del(df)
-    np.savetxt(f'/scratch/st-tv01-1/hcp/targets/icc_{r}_n{len(sub)}.txt', icc)
+def icc(df):
+    if df[0] % 50000 == 0:
+        print(f'edge {df[0]}')
+    return (df[0], pg.intraclass_corr(data = df[1], targets = 'subject', raters = 'run', ratings = 'value').ICC[4])
     
 
-pool.close()
-print(df.shape)
-print(df.head())
+def main(logfile=None):
+    if logfile is not None:
+        f = open(logfile, 'w')
+        sys.stdout = f
+        
+    roi = ['dlpfc', 'tpj', 'pre_sma']
+    conditions = ['REST1', 'REST4', 'MOVIE2', 'MOVIE4']
+    sub = pd.read_csv('/arc/project/st-tv01-1/hcp/targets/m2m4_sub_n111.csv', header = None).squeeze()
+    # loop over each roi
+    pool = mp.Pool(mp.cpu_count())
+    for r in roi:
+        for c in ['REST','MOVIE']:
+            # setup starmap args
+            args = []
+            start = time.time()
+            for s in sub:
+                #print(f'loading {s}...')
+                args.append((s, r, [x for x sin conditions if x.startswith(c)]))
+            results = pool.starmap(rearrange, args)
+            # concat subs to 1 df
+            df = results.pop(0)
+            while len(results) > 0:
+                df = pd.concat((df, results.pop()))
+            # run icc code and save
+            minutes = round((time.time() - start) / 60,1)
+            print(f'all {r} {c} data loaded in {minutes} min')
+            start = time.time()
+            df = list(df.groupby('edge'))
+            icc = pool.map(icc_analysis, df)
+            minutes = round((time.time() - start)/60,1)
+            print(f'{r} {c} calculated in {minutes}')
+            del(df)
+            np.savetxt(f'/scratch/st-tv01-1/hcp/targets/icc_{r}_n{len(sub)}.txt', np.array(icc))
+    pool.close()
+    print(df.shape)
+    print(df.head())
+    
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("logfile", default=None)
+    args = parser.parse_args()
+    main(args.logfile)
