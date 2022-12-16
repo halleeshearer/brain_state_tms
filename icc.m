@@ -6,7 +6,7 @@ catch
     sub = [];
 end
 p = inputParser;
-p.addParameter('fcDir','/scratch/st-tv01/hcp/targets');
+p.addParameter('fcDir','/scratch/st-tv01-1/hcp/targets');
 p.addParameter('rois', {'tpj', 'dlpfc', 'pre_sma'});
 p.addParameter('runs', {'REST1', 'REST4', 'MOVIE2','MOVIE4'});
 p.addParameter('sub',sub);
@@ -57,14 +57,14 @@ for i=1:numel(rois)
         tic
         parfor e=1:size(run1,2)
             if ~mod(e, 100000)
-                xprintf(fid,'\n\t\tedge %d',e);
+                xprintf(0,'\n\t\tedge %d',e);
             end
             icc(e) = util.icc21([run1(:,e) run2(:,e)]);
         end
         xprintf(fid,'\n\t%d edge iccs calculated in %.1f min',edges,toc/60);
         % save data
         file = fullfile(fcDir,sprintf('icc_%s_%s_n%d.txt',rois{i},cond{j}, numel(sub)));
-        writematrix(icc,file);
+        writematrix(reshape(icc,dim(1:2)),file);
         xprintf(fid,'%s written!',file);
     end
 end
