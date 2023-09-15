@@ -57,7 +57,7 @@ def cluster_analyze(cores=4):
             print(f'Analyzing thresh={t}')
     # run
     pool = Pool(cores)
-    outputs = pool.starmap(cluster_centroids, thresh_run)
+    outputs = pool.map(cluster_centroids, thresh_run)
     pool.close()
     return outputs
 
