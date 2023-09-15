@@ -3,6 +3,7 @@ import nibabel as nib
 import pandas as pd
 import numpy as np
 import os
+import hcp_utils as hcp
 
 # setup global vars
 condition = ['MOVIE2', 'MOVIE4', 'REST1', 'REST4']
@@ -15,7 +16,7 @@ dlpfc = '/arc/project/st-tv01-1/hcp/code/hallee_hcp_targets/data/dlpfc.dscalar.n
 lh = '/arc/project/st-tv01-1/atlas/HCP_S1200/S1200.L.midthickness_MSMAll.32k_fs_LR.surf.gii'
 rh = '/arc/project/st-tv01-1/atlas/HCP_S1200/S1200.R.midthickness_MSMAll.32k_fs_LR.surf.gii'
 
-def run_clustering(thresh_prop):
+def run_clustering(thresh_prop, cores=8):
     # collect sub, etc.
     df = pd.DataFrame(columns=['sub','condition','thresh_prop'])
     if not os.path.isdir(out_path):
