@@ -96,7 +96,7 @@ def cluster_centroids(thresh):
     # compute distances
     df_dist = pd.DataFrame(columns=['sub', 'condition_pair', 'centroid_distance'])
     for i,s in enumerate(sub):
-        cond_idx = df_cent.loc[df_cent['sub'] ==int(s),['condition', 'centroid_dlpfc_index']].set_index('condition')
+        cond_idx = df_cent.loc[df_cent['sub'] == s,['condition', 'centroid_dlpfc_index']].set_index('condition')
         cond_idx = cond_idx.loc[condition,'centroid_dlpfc_index'].tolist()
         cond_dist = dlpfc_dist[cond_idx, :]
         cond_dist = cond_dist[:, cond_idx]
