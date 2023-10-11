@@ -18,7 +18,7 @@ lh = '/arc/project/st-tv01-1/atlas/HCP_S1200/S1200.L.midthickness_MSMAll.32k_fs_
 rh = '/arc/project/st-tv01-1/atlas/HCP_S1200/S1200.R.midthickness_MSMAll.32k_fs_LR.surf.gii'
 
 
-def load_left_mask(mask=dlpfc):
+def load_mask(mask=dlpfc):
     dlpfc_mask = nib.load(mask).get_fdata().squeeze()
     # remove medial wall, select left cortex
     if dlpfc_mask.shape[0] == 64984:
@@ -44,7 +44,7 @@ def run_clustering(thresh_prop, cores=4):
 
 
 def cifti_cluster(subject, cond, thresh_prop):
-    dlpfc_mask = load_left_mask()
+    dlpfc_mask = load_mask()
     cifti = f'{indiv_out}/{cond}_{subject}_seedmap.dscalar.nii'
     data = nib.load(cifti).get_fdata()[:,hcp.struct.cortex]
     for t in thresh_prop:
@@ -74,7 +74,7 @@ def cluster_analyze(cores=4):
 
 def cluster_centroids(thresh):
     dlpfc_dist = np.load(f'{out_path}/dlpfc_cash_geodesic.npy')
-    dlpfc_mask = load_left_mask() #nib.load(dlpfc).get_fdata()[:,hcp.struct.cortex_left].squeeze()
+    dlpfc_mask = load_mask()[hcp.struct.cortex_left]
     dlpfc_vert = np.loadtxt(f'{out_path}/dlpfc_cash_verts.txt')
     # find centroids
     df_cent = pd.DataFrame(columns=['sub', 'condition', 'cluster_size','centroid_vertex','centroid_dlpfc_index', 'centroid_value'])
