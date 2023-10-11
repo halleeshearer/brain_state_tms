@@ -13,9 +13,20 @@ data_path = os.path.join(hcp_path, 'data-clean')
 out_path = '/scratch/st-tv01-1/hcp/targets/dual_reg'
 indiv_out = os.path.join(out_path, 'indiv')
 sub = np.loadtxt(os.path.join(hcp_path,'targets','m2m4_sub_n109.csv'), dtype=str)
-dlpfc = '/arc/project/st-tv01-1/hcp/code/hallee_hcp_targets/data/dlpfc.dscalar.nii'
+dlpfc = '/arc/project/st-tv01-1/hcp/code/hallee_hcp_targets/data/dlpfc_cash.dscalar.nii'
 lh = '/arc/project/st-tv01-1/atlas/HCP_S1200/S1200.L.midthickness_MSMAll.32k_fs_LR.surf.gii'
 rh = '/arc/project/st-tv01-1/atlas/HCP_S1200/S1200.R.midthickness_MSMAll.32k_fs_LR.surf.gii'
+
+
+def load_left_mask(mask=dlpfc):
+    dlpfc_mask = nib.load(mask).get_fdata().squeeze()
+    # remove medial wall, select left cortex
+    if dlpfc_mask.shape[0] == 64984:
+        medial = nib.load('/arc/project/st-tv01-1/atlas/HCP_S1200/Human.MedialWall_Conte69.32k_fs_LR.dlabel.nii').get_fdata().squeeze() == 1
+        dlpfc_mask = np.delete(dlpfc_mask, medial)
+    dlpfc_mask=dlpfc_mask[hcp.struct.cortex] != 0
+    return dlpfc_mask
+
 
 def run_clustering(thresh_prop, cores=4):
     # collect sub, etc.
@@ -33,7 +44,7 @@ def run_clustering(thresh_prop, cores=4):
 
 
 def cifti_cluster(subject, cond, thresh_prop):
-    dlpfc_mask = nib.load(dlpfc).get_fdata()[:,hcp.struct.cortex].squeeze() != 0
+    dlpfc_mask = load_left_mask()
     cifti = f'{indiv_out}/{cond}_{subject}_seedmap.dscalar.nii'
     data = nib.load(cifti).get_fdata()[:,hcp.struct.cortex]
     for t in thresh_prop:
@@ -62,9 +73,9 @@ def cluster_analyze(cores=4):
     return outputs
 
 def cluster_centroids(thresh):
-    dlpfc_dist = np.load(f'{out_path}/dlpfc_geodesic.npy')
-    dlpfc_mask = nib.load(dlpfc).get_fdata()[:,hcp.struct.cortex_left].squeeze()
-    dlpfc_vert = np.loadtxt(f'{out_path}/dlpfc_verts.txt')
+    dlpfc_dist = np.load(f'{out_path}/dlpfc_cash_geodesic.npy')
+    dlpfc_mask = load_left_mask() #nib.load(dlpfc).get_fdata()[:,hcp.struct.cortex_left].squeeze()
+    dlpfc_vert = np.loadtxt(f'{out_path}/dlpfc_cash_verts.txt')
     # find centroids
     df_cent = pd.DataFrame(columns=['sub', 'condition', 'cluster_size','centroid_vertex','centroid_dlpfc_index', 'centroid_value'])
     for i,s in enumerate(sub):
