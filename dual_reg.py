@@ -13,7 +13,7 @@ data_path = os.path.join(hcp_path, 'data-clean')
 out_path = '/scratch/st-tv01-1/hcp/targets/dual_reg'
 indiv_out = os.path.join(out_path, 'indiv')
 sub = np.loadtxt(os.path.join(hcp_path,'targets','m2m4_sub_n109.csv'), dtype=str)
-dlpfc = '/arc/project/st-tv01-1/hcp/code/hallee_hcp_targets/data/dlpfc_cash.dscalar.nii'
+dlpfc = '/arc/project/st-tv01-1/hcp/code/hallee_hcp_targets/data/dlpfc_cash_medial_removed.dscalar.nii'
 lh = '/arc/project/st-tv01-1/atlas/HCP_S1200/S1200.L.midthickness_MSMAll.32k_fs_LR.surf.gii'
 rh = '/arc/project/st-tv01-1/atlas/HCP_S1200/S1200.R.midthickness_MSMAll.32k_fs_LR.surf.gii'
 
